@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-primary: #00C896;
+  --color-brand-secondary: #064e3b;
+  --color-brand-accent: #f59e0b;
+  --color-teal-accent: #00C896;
+}
+
+@layer base {
+  html {
+    @apply transition-colors duration-300;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased transition-colors duration-300;
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark body {
+    @apply bg-[#121212] text-slate-100;
+  }
+  
+  .dark html {
+    @apply bg-[#121212];
+  }
+}
+
+.glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+}
+
+.fintech-gradient {
+  @apply bg-gradient-to-br from-[#00C896] to-[#00A87E];
+}
