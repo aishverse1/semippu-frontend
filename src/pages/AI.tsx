@@ -53,14 +53,18 @@ export default function AI() {
     );
   }
 
+  const corpus = aiPlan?.retirement_corpus ?? 0;
+  const pensionPerMonth = aiPlan?.pension_per_month ?? (corpus ? Math.round((corpus * 0.06) / 12) : 0);
+
   const aiResults = {
     daily_savings:      aiPlan?.daily_savings      ?? '...',
     monthly_savings:    aiPlan?.monthly_savings     ?? '...',
     best_scheme:        aiPlan?.best_scheme         ?? 'Loading...',
-    retirement_corpus:  aiPlan?.retirement_corpus   ?? 0,
+    retirement_corpus:  corpus,
+    pension_per_month:  pensionPerMonth,
     warning:            aiPlan?.warning             ?? '',
     retirement_outlook: aiPlan
-      ? `In ${aiPlan.years_to_retire} years you'll have ₹${aiPlan.retirement_corpus?.toLocaleString()}`
+      ? `In ${aiPlan.years_to_retire} years you'll have ₹${corpus?.toLocaleString()}`
       : user.yearsToRetire && user.yearsToRetire > 20
         ? "You have a long horizon. Consider aggressive growth investments."
         : "Horizon is narrowing. Focus on capital preservation and steady contributions.",
@@ -89,6 +93,14 @@ export default function AI() {
       icon: Target,
       color: "text-purple-400",
       bg: "bg-purple-500/10",
+    },
+    {
+      title: "Pension per Month",
+      description: `Estimated monthly pension (6% of corpus): ₹${pensionPerMonth.toLocaleString()}/month`,
+      icon: Calendar,
+      color: "text-amber-400",
+      bg: "bg-amber-500/10",
+      value: `₹${pensionPerMonth.toLocaleString()}`,
     },
   ];
 

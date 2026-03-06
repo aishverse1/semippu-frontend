@@ -39,6 +39,7 @@ export interface AIPlan {
   daily_savings: number;
   best_scheme: string;
   retirement_corpus: number;
+  pension_per_month?: number;  // (retirement_corpus * 0.06) / 12
   years_to_retire: number;
   warning: string;
   avg_monthly_savings: number;
@@ -121,23 +122,10 @@ export const PensionProvider = ({ children }: { children: ReactNode }) => {
   // ── Calculate avg monthly savings from contribution history ───────────────
   const totalInvested = contributions.reduce((sum, c) => sum + c.amount, 0);
 
-  const monthsTracked = (() => {
-    if (contributions.length === 0) return 0
-    const sorted = [...contributions].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
-    const firstDate = new Date(sorted[0].date)
-    const now = new Date()
-    return Math.max(
-      1,
-      (now.getFullYear() - firstDate.getFullYear()) * 12 +
-      (now.getMonth() - firstDate.getMonth())
-    )
-  })()
-
-  const avgMonthlySavings = contributions.length > 0
-    ? Math.round(totalInvested / monthsTracked)
-    : 0
+  // Avg = total / number of contributions (e.g. 200+200+300+300+400+500 over 6 → ₹317/month). Fresh corpus, no add to old.
+  const numContributions = contributions.length;
+  const avgMonthlySavings = numContributions > 0 ? Math.round(totalInvested / numContributions) : 0;
+  const monthsTracked = numContributions; // for context consumers; avg = totalInvested / monthsTracked
 
   // ── Fetch AI Plan ─────────────────────────────────────────────────────────
   const fetchAIPlan = async () => {
