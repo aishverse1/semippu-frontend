@@ -38,18 +38,26 @@ export default function Auth() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Onboarding state
+  // Member onboarding state
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState({
     age: '',
     dependents: '',
     monthlyExpenses: '',
     existingSavings: '',
-    yearsToRetire: '20',
+    yearsToRetire: '38',
     minWage: '',
     maxWage: '',
     minWorkingDays: '',
     maxWorkingDays: '',
+  });
+  // Admin onboarding state (org, role, branch, code)
+  const [adminOnboardingStep, setAdminOnboardingStep] = useState(0);
+  const [adminOnboardingData, setAdminOnboardingData] = useState({
+    organisation: '',
+    role: '',
+    branch: '',
+    code: '',
   });
   
   const { login } = usePension();
@@ -92,9 +100,10 @@ export default function Auth() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || t('invalidCredentials'));
 
-        // Success
+        // Success - admin goes straight to dashboard, no onboarding
         localStorage.setItem('auth_token', data.token);
-        login(data.user.phoneNumber, `User ${data.user.phoneNumber.slice(-4)}`, data.user.isAdmin);
+        const adminName = data.user.isAdmin ? `Admin ${data.user.phoneNumber.slice(-4)}` : `User ${data.user.phoneNumber.slice(-4)}`;
+        login(data.user.phoneNumber, adminName, data.user.isAdmin);
         navigate('/');
       } catch (err: any) {
         setError(err.message);
@@ -138,8 +147,22 @@ export default function Auth() {
     setTimeout(() => {
       setStep('onboarding');
       setIsLoading(false);
+      if (isAdmin) {
+        setAdminOnboardingStep(0);
+        setAdminOnboardingData({ organisation: '', role: '', branch: '', code: '' });
+      } else {
+        setOnboardingStep(0);
+        setOnboardingData(prev => ({ ...prev, yearsToRetire: '38' }));
+      }
     }, 800);
   };
+
+  const adminOnboardingSteps = [
+    { id: 'organisation', title: 'Organisation', icon: Users, description: 'What organisation do you represent?' },
+    { id: 'role', title: 'Role', icon: User, description: 'What is your role?' },
+    { id: 'branch', title: 'Branch', icon: CreditCard, description: 'Which branch?' },
+    { id: 'code', title: 'Code', icon: PiggyBank, description: 'Branch/Employee code?' },
+  ];
 
   const onboardingSteps = [
     { id: 'age', title: 'Age', icon: User, description: 'How old are you?' },
@@ -155,29 +178,106 @@ export default function Auth() {
     setOnboardingData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAdminOnboardingChange = (field: string, value: string) => {
+    setAdminOnboardingData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleOnboardingNext = () => {
-    if (onboardingStep < onboardingSteps.length - 1) {
-      setOnboardingStep(onboardingStep + 1);
+    if (isAdmin) {
+      if (adminOnboardingStep < adminOnboardingSteps.length - 1) {
+        setAdminOnboardingStep(adminOnboardingStep + 1);
+      } else {
+        const profileData = {
+          organisation: adminOnboardingData.organisation,
+          role: adminOnboardingData.role,
+          branch: adminOnboardingData.branch,
+          code: adminOnboardingData.code,
+        };
+        login(phoneNumber, `Admin ${phoneNumber.slice(-4)}`, true, profileData);
+        navigate('/');
+      }
     } else {
-      // Final completion
-      const profileData = {
-        age: parseInt(onboardingData.age) || 0,
-        dependents: parseInt(onboardingData.dependents) || 0,
-        monthlyExpenses: parseFloat(onboardingData.monthlyExpenses) || 0,
-        existingSavings: parseFloat(onboardingData.existingSavings) || 0,
-        yearsToRetire: parseInt(onboardingData.yearsToRetire) || 0,
-        minWage: parseFloat(onboardingData.minWage) || 0,
-        maxWage: parseFloat(onboardingData.maxWage) || 0,
-        minWorkingDays: parseInt(onboardingData.minWorkingDays) || 0,
-        maxWorkingDays: parseInt(onboardingData.maxWorkingDays) || 0,
-      };
-      
-      login(phoneNumber, `User ${phoneNumber.slice(-4)}`, isAdmin, profileData);
-      navigate('/');
+      if (onboardingStep < onboardingSteps.length - 1) {
+        setOnboardingStep(onboardingStep + 1);
+      } else {
+        const profileData = {
+          age: parseInt(onboardingData.age) || 0,
+          dependents: parseInt(onboardingData.dependents) || 0,
+          monthlyExpenses: parseFloat(onboardingData.monthlyExpenses) || 0,
+          existingSavings: parseFloat(onboardingData.existingSavings) || 0,
+          yearsToRetire: parseInt(onboardingData.yearsToRetire) || 38,
+          minWage: parseFloat(onboardingData.minWage) || 0,
+          maxWage: parseFloat(onboardingData.maxWage) || 0,
+          minWorkingDays: parseInt(onboardingData.minWorkingDays) || 0,
+          maxWorkingDays: parseInt(onboardingData.maxWorkingDays) || 0,
+        };
+        login(phoneNumber, `User ${phoneNumber.slice(-4)}`, false, profileData);
+        navigate('/');
+      }
     }
   };
 
   const renderOnboardingStep = () => {
+    if (isAdmin) {
+      const currentStep = adminOnboardingSteps[adminOnboardingStep];
+      switch (currentStep.id) {
+        case 'organisation':
+          return (
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Organisation</label>
+              <input
+                type="text"
+                value={adminOnboardingData.organisation}
+                onChange={(e) => handleAdminOnboardingChange('organisation', e.target.value)}
+                placeholder="e.g. State Pension Board"
+                className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+              />
+            </div>
+          );
+        case 'role':
+          return (
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Role</label>
+              <input
+                type="text"
+                value={adminOnboardingData.role}
+                onChange={(e) => handleAdminOnboardingChange('role', e.target.value)}
+                placeholder="e.g. Branch Manager"
+                className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+              />
+            </div>
+          );
+        case 'branch':
+          return (
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Branch</label>
+              <input
+                type="text"
+                value={adminOnboardingData.branch}
+                onChange={(e) => handleAdminOnboardingChange('branch', e.target.value)}
+                placeholder="e.g. Chennai Central"
+                className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+              />
+            </div>
+          );
+        case 'code':
+          return (
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Branch / Employee Code</label>
+              <input
+                type="text"
+                value={adminOnboardingData.code}
+                onChange={(e) => handleAdminOnboardingChange('code', e.target.value)}
+                placeholder="e.g. BR001 or EMP12345"
+                className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-lg font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 transition-all"
+              />
+            </div>
+          );
+        default:
+          return null;
+      }
+    }
+
     const currentOnboardingStep = onboardingSteps[onboardingStep];
     
     switch (currentOnboardingStep.id) {
@@ -249,15 +349,14 @@ export default function Auth() {
             <input
               type="range"
               min="1"
-              max="50"
+              max="58"
               value={onboardingData.yearsToRetire}
               onChange={(e) => handleOnboardingChange('yearsToRetire', e.target.value)}
               className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
             <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest">
               <span>1 Year</span>
-              <span>25 Years</span>
-              <span>50 Years</span>
+              <span>58 Years</span>
             </div>
           </div>
         );
@@ -581,56 +680,66 @@ export default function Auth() {
                 transition={{ duration: 0.4, ease: "easeInOut" }}
                 className="space-y-8"
               >
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                    <span>Onboarding Step {onboardingStep + 1} of {onboardingSteps.length}</span>
-                    <span>{Math.round(((onboardingStep + 1) / onboardingSteps.length) * 100)}%</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-emerald-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${((onboardingStep + 1) / onboardingSteps.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const steps = isAdmin ? adminOnboardingSteps : onboardingSteps;
+                  const stepIndex = isAdmin ? adminOnboardingStep : onboardingStep;
+                  return (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                          <span>{isAdmin ? 'Admin Setup' : 'Onboarding'} Step {stepIndex + 1} of {steps.length}</span>
+                          <span>{Math.round(((stepIndex + 1) / steps.length) * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-emerald-500"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      {React.createElement(onboardingSteps[onboardingStep].icon, { size: 20 })}
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                      {onboardingSteps[onboardingStep].title}
-                    </h2>
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {onboardingSteps[onboardingStep].description}
-                  </p>
-                </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            {React.createElement(steps[stepIndex].icon, { size: 20 })}
+                          </div>
+                          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            {steps[stepIndex].title}
+                          </h2>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          {steps[stepIndex].description}
+                        </p>
+                      </div>
 
-                <div className="min-h-[120px]">
-                  {renderOnboardingStep()}
-                </div>
+                      <div className="min-h-[120px]">
+                        {renderOnboardingStep()}
+                      </div>
 
-                <div className="flex gap-4">
-                  {onboardingStep > 0 && (
-                    <button
-                      onClick={() => setOnboardingStep(onboardingStep - 1)}
-                      className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                    >
-                      <ChevronLeft size={20} />
-                      Back
-                    </button>
-                  )}
-                  <button
-                    onClick={handleOnboardingNext}
-                    className="flex-[2] py-4 fintech-gradient text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all flex items-center justify-center gap-2"
-                  >
-                    {onboardingStep === onboardingSteps.length - 1 ? 'Complete' : 'Continue'}
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
+                      <div className="flex gap-4">
+                        {stepIndex > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => isAdmin ? setAdminOnboardingStep(stepIndex - 1) : setOnboardingStep(stepIndex - 1)}
+                            className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                          >
+                            <ChevronLeft size={20} />
+                            Back
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleOnboardingNext}
+                          className="flex-[2] py-4 fintech-gradient text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all flex items-center justify-center gap-2"
+                        >
+                          {stepIndex === steps.length - 1 ? 'Complete' : 'Continue'}
+                          <ChevronRight size={20} />
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>

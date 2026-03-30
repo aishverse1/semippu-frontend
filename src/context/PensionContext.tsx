@@ -29,6 +29,11 @@ export interface User {
   maxWage?: number;
   minWorkingDays?: number;
   maxWorkingDays?: number;
+  // Admin profile (org, role, branch, code)
+  organisation?: string;
+  role?: string;
+  branch?: string;
+  code?: string;
 }
 
 export interface AIPlan {
@@ -121,11 +126,20 @@ export const PensionProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Calculate avg monthly savings from contribution history ───────────────
   const totalInvested = contributions.reduce((sum, c) => sum + c.amount, 0);
-
-  // Avg = total / number of contributions (e.g. 200+200+300+300+400+500 over 6 → ₹317/month). Fresh corpus, no add to old.
+  const monthlyContributions = contributions.filter(c => c.type === 'Monthly');
+  const dailyContributions = contributions.filter(c => c.type === 'Daily');
+  const totalMonthly = monthlyContributions.reduce((sum, c) => sum + c.amount, 0);
+  const totalDaily = dailyContributions.reduce((sum, c) => sum + c.amount, 0);
+  const avgMonthlyFromMonthly = monthlyContributions.length > 0 ? totalMonthly / monthlyContributions.length : 0;
+  const avgDailyFromDaily = dailyContributions.length > 0 ? totalDaily / dailyContributions.length : 0;
+  // Monthly: use avg directly. Daily: avg daily × 30 = monthly equivalent.
+  const avgMonthlySavings = monthlyContributions.length > 0
+    ? Math.round(avgMonthlyFromMonthly)
+    : dailyContributions.length > 0
+      ? Math.round(avgDailyFromDaily * 30)
+      : 0;
   const numContributions = contributions.length;
-  const avgMonthlySavings = numContributions > 0 ? Math.round(totalInvested / numContributions) : 0;
-  const monthsTracked = numContributions; // for context consumers; avg = totalInvested / monthsTracked
+  const monthsTracked = numContributions;
 
   // ── Fetch AI Plan ─────────────────────────────────────────────────────────
   const fetchAIPlan = async () => {
@@ -145,7 +159,8 @@ export const PensionProvider = ({ children }: { children: ReactNode }) => {
     setAiError(null);
 
     try {
-      const retirementAge = age + (yearsToRetire ?? 20);
+      const retirementAge = 58;  // fixed retirement age
+      const years = retirementAge - (age ?? 20);
 
       const response = await fetch('http://localhost:3000/api/ai/predict', {
         method: 'POST',

@@ -6,7 +6,7 @@ import { Plus, Calendar, Clock, IndianRupee, CheckCircle2, TrendingUp, History }
 
 export default function Invest() {
   const [amount, setAmount] = useState<string>('');
-  const [type, setType] = useState<'Daily' | 'Monthly'>('Monthly');
+  const [type, setType] = useState<'Daily' | 'Monthly'>('Daily');
   const [showSuccess, setShowSuccess] = useState(false);
   
   const { addContribution, contributions } = usePension();

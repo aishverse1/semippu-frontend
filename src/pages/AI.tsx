@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { usePension } from '../context/PensionContext';
 import { 
@@ -19,12 +20,18 @@ import {
 
 export default function AI() {
   const { user, totalInvested, aiPlan, aiLoading, aiError, fetchAIPlan } = usePension();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAIPlan();
-  }, []);
+    if (user?.isAdmin) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if (user && !user.isAdmin) fetchAIPlan();
+  }, [user]);
 
   if (!user) return null;
+  if (user.isAdmin) return null;
 
   // ── Loading State ─────────────────────────────────────────────────────────
   if (aiLoading) {
@@ -64,7 +71,7 @@ export default function AI() {
     pension_per_month:  pensionPerMonth,
     warning:            aiPlan?.warning             ?? '',
     retirement_outlook: aiPlan
-      ? `In ${aiPlan.years_to_retire} years you'll have ₹${corpus?.toLocaleString()}`
+      ? `In ${aiPlan.years_to_retire} years (by age 58) you'll have ₹${corpus?.toLocaleString()}`
       : user.yearsToRetire && user.yearsToRetire > 20
         ? "You have a long horizon. Consider aggressive growth investments."
         : "Horizon is narrowing. Focus on capital preservation and steady contributions.",
@@ -149,7 +156,7 @@ export default function AI() {
               { label: 'Max Wage / Day',     value: user.maxWage            ? `₹${user.maxWage}`                         : 'Not set' },
               { label: 'Min Working Days',   value: user.minWorkingDays     ? `${user.minWorkingDays} days`               : 'Not set' },
               { label: 'Max Working Days',   value: user.maxWorkingDays     ? `${user.maxWorkingDays} days`               : 'Not set' },
-              { label: 'Retirement In',      value: user.yearsToRetire      ? `${user.yearsToRetire} Years`               : 'Not set' },
+              { label: 'Retirement At',      value: user.age != null ? `${58 - user.age} Years (Age 58)` : 'Not set' },
               { label: 'Total Invested',     value: `₹${totalInvested.toLocaleString()}` },
             ].map((item, i) => (
               <div key={i} className="flex justify-between items-center py-3 border-b border-slate-800 last:border-0">

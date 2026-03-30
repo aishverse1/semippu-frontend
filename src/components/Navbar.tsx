@@ -34,7 +34,7 @@ export default function Navbar() {
     { path: '/invest', label: t('invest'), icon: TrendingUp },
     { path: '/loans', label: t('loans'), icon: HandCoins },
     { path: '/policies', label: t('policies'), icon: BookOpen },
-    { path: '/ai', label: t('ai'), icon: Sparkles },
+    ...(!user?.isAdmin ? [{ path: '/ai', label: t('ai'), icon: Sparkles }] : []),
     { path: '/settings', label: t('settings'), icon: Settings },
     ...(user?.isAdmin ? [{ path: '/admin', label: t('adminSettings'), icon: ShieldCheck }] : []),
   ];
