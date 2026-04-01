@@ -1,20 +1,114 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Semippu — Retirement Planning for Daily Wage Workers
 
-# Run and deploy your AI Studio app
+Semippu is an AI-powered retirement savings platform built for India's 300M+ daily wage and informal sector workers. It provides personalized savings suggestions, government scheme recommendations, and retirement corpus projections — all based on irregular income patterns.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/a3ed0d4e-53f1-4a81-83a7-c2a2e526ce19
+## Features
 
-## Run Locally
+- Phone number authentication with OTP
+- Personalized AI savings plan based on income range
+- Government scheme eligibility checker (APY, PPF, NPS, Post Office RD)
+- Daily and monthly savings suggestions
+- Retirement corpus calculator using compound interest
+- Monthly pension estimator
+- Contribution tracking and history
+- Loan management system
+- Admin dashboard
+- Multi-language support
+- Dark/light theme
 
-**Prerequisites:**  Node.js
+---
 
+## Tech Stack
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- Express.js (backend server)
+- SQLite (database)
+- Firebase (authentication)
+- Framer Motion (animations)
+
+---
+
+## Project Structure
+```
+semippu/
+├── src/
+│   ├── pages/
+│   │   ├── AI.tsx          ← AI insights page
+│   │   ├── Dashboard.tsx   ← Main dashboard
+│   │   ├── Auth.tsx        ← Login/Register
+│   │   ├── Invest.tsx      ← Contribution tracking
+│   │   ├── Loans.tsx       ← Loan management
+│   │   ├── Policies.tsx    ← Government schemes
+│   │   ├── Settings.tsx    ← User settings
+│   │   └── Admin.tsx       ← Admin panel
+│   ├── context/
+│   │   ├── PensionContext.tsx   ← Global state + AI integration
+│   │   ├── LanguageContext.tsx  ← i18n support
+│   │   └── ThemeContext.tsx     ← Dark/light theme
+│   ├── components/
+│   │   ├── Navbar.tsx
+│   │   └── Layout.tsx
+│   └── i18n/
+│       └── translations.ts
+├── server.ts       ← Express backend + API proxy
+├── index.html
+└── vite.config.ts
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Python 3.10+ (for AI backend)
+
+### Installation
+```bash
+git clone https://github.com/aishverse1/semippu-frontend.git
+cd semippu-frontend
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file:
+```
+JWT_SECRET=your_secret_key
+FASTAPI_URL=http://127.0.0.1:8000
+```
+
+### Run Locally
+```bash
+npm run dev
+```
+
+App runs at `http://localhost:3000`
+
+---
+
+## AI Integration
+
+This frontend connects to the Semippu AI backend via Express proxy:
+```
+Frontend → Express (/api/ai/predict) → FastAPI → AI Model
+```
+
+Make sure the AI backend is running before using the AI page.
+
+---
+
+## Deployment
+
+Frontend is deployed on **Vercel**.
+AI backend is deployed on **Hugging Face Spaces**.
+
+---
+
+## Team
+
+Built for Zenith Hackathon 2025
